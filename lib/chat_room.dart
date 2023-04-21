@@ -66,10 +66,10 @@ class _ChatRoomState extends State<ChatRoom> implements ServiceChatXiaomiCallBac
       children: [
         if (!isOnline)
           Container(
-            height: 40,
-            color: Colors.yellow,
+            height: 30,
+            color: Colors.red,
             child: Center(
-              child: Text("没有连接服务器，请检查网络",style: TextStyle(color: Colors.white),),
+              child: Text("没有连接服务器，请检查网络",style: TextStyle(color: Colors.white,fontSize: 13),),
             ),
           ),
         Expanded(
