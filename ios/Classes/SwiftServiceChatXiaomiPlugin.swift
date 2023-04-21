@@ -48,7 +48,7 @@ public class SwiftServiceChatXiaomiPlugin: NSObject, FlutterPlugin, parseTokenDe
 //                })
         var messages = [Dictionary<String, Any?>]()
         packets.forEach { message in
-            messages.append(["fromAccount":message.getFromAccount(),"msg":String(data: message.getPayload(), encoding: .utf8),"msgType":message.getBizType(),"packetId":message.getPacketId(),"sequence":message.getSequence(),"timestamp":message.getTimestamp()])
+            messages.append(["fromAccount":message.getFromAccount(),"data":String(data: message.getPayload(), encoding: .utf8),"msgType":message.getBizType(),"packetId":message.getPacketId(),"sequence":message.getSequence(),"timestamp":message.getTimestamp(),"toAccount":message.getToAccount()])
         }
         channel.invokeMethod("handleMessage", arguments: messages)
         return true
@@ -67,7 +67,6 @@ public class SwiftServiceChatXiaomiPlugin: NSObject, FlutterPlugin, parseTokenDe
     }
     
     public func handleOnlineMessage(_ onlineMessage: MIMCMessage!) {
-        
     }
     
     public func handle(_ onlineMessageAck: MCOnlineMessageAck!) {
@@ -79,6 +78,7 @@ public class SwiftServiceChatXiaomiPlugin: NSObject, FlutterPlugin, parseTokenDe
     }
     
     public func handleSendMessageTimeout(_ message: MIMCMessage!) {
+        channel.invokeMethod("handleSendMessageTimeout",arguments: message.getPacketId())
         
     }
     
@@ -91,7 +91,7 @@ public class SwiftServiceChatXiaomiPlugin: NSObject, FlutterPlugin, parseTokenDe
     }
     
     public func statusChange(_ user: MCUser!, status: Int32, type: String!, reason: String!, desc: String!) {
-        NSLog("status:\(status),desc:\(String(describing: desc))")
+        channel.invokeMethod("statusChange",arguments: status == 1)
     }
     
     public func parseProxyServiceToken(_ callback: ((Data?) -> Void)!) {
@@ -118,6 +118,10 @@ public class SwiftServiceChatXiaomiPlugin: NSObject, FlutterPlugin, parseTokenDe
           let appId = dic.string(key: "appId")
           let appAccount = dic.string(key: "appAccount")
           getTokenUrl = dic.string(key: "getTokenUrl")
+          if(_user != nil && _user?.getAppAccount() == appAccount && _user?.isOnline() == true){
+              result(true)
+              return
+          }
           _user?.destroy()
           _user = MCUser.init(appId: Int64(appId)!, andAppAccount: appAccount)
           _user?.parseTokenDelegate = self
@@ -133,9 +137,14 @@ public class SwiftServiceChatXiaomiPlugin: NSObject, FlutterPlugin, parseTokenDe
           break
       case "sendTextMessage":
           let dic = call.arguments as! NSDictionary
-          let toAccount = dic.string(key: "appAccount")
-          result(_user?.sendMessage(toAccount, payload: dic.string(key: "text").data(using: .utf8), bizType: "TEXT"))
+          let toAccount = dic.string(key: "toAccount")
+          result(_user?.sendMessage(toAccount, payload: dic.string(key: "data").data(using: .utf8), bizType: "TEXT"))
           break
+          
+      case "isOnline":
+          let dic = call.arguments as! NSDictionary
+          let appAccount = dic.string(key: "appAccount")
+          result(_user?.getAppAccount() == appAccount && _user?.isOnline() == true)
       default:
           result("iOS " + UIDevice.current.systemVersion)
       }
@@ -151,4 +160,5 @@ extension NSDictionary{
     func int(key:String) -> Int? {
         return self[key] as? Int
     }
+    
 }

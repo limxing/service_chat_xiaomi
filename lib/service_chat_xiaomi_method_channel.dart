@@ -1,6 +1,9 @@
+import 'dart:ffi';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
+import 'chat_message.dart';
 import 'service_chat_xiaomi_platform_interface.dart';
 
 /// An implementation of [ServiceChatXiaomiPlatform] that uses method channels.
@@ -9,11 +12,29 @@ class MethodChannelServiceChatXiaomi extends ServiceChatXiaomiPlatform {
   @visibleForTesting
   final methodChannel = const MethodChannel('service_chat_xiaomi');
 
-  MethodChannelServiceChatXiaomi(){
+  MethodChannelServiceChatXiaomi() {
     methodChannel.setMethodCallHandler((call) {
-      if(call.method == 'handleMessage'){
-        print("接收消息：${call.arguments}");
-        chatXiaomiCallBack?.call(call.arguments);
+      switch(call.method){
+        case "handleMessage":
+          print("接收消息：${call.arguments} chatXiaomiCallBacks:${chatXiaomiCallBacks.length}" );
+          var messages = (call.arguments as List<dynamic>).map((e) => ChatMessage.fromJson(e)).toList();
+          for (var element in chatXiaomiCallBacks) {
+            element.handleMessage(messages);
+          }
+          break;
+        case "handleSendMessageTimeout":
+          for (var element in chatXiaomiCallBacks) {
+            element.handleSendMessageTimeout(call.arguments);
+          }
+          print("handleSendMessageTimeout：${call.arguments}" );
+          break;
+        case 'statusChange':
+
+          print("statusChange：${call.arguments}" );
+          for (var element in chatXiaomiCallBacks) {
+            element.statusChange(call.arguments);
+          }
+          break;
       }
       return Future.value(null);
     });
@@ -26,8 +47,7 @@ class MethodChannelServiceChatXiaomi extends ServiceChatXiaomiPlatform {
   }
 
   @override
-  Future invokeMethod(String methodName,[ dynamic arguments ]){
-    return methodChannel.invokeMethod(methodName,arguments);
+  Future invokeMethod(String methodName, [dynamic arguments]) {
+    return methodChannel.invokeMethod(methodName, arguments);
   }
-
 }

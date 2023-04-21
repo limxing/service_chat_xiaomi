@@ -18,6 +18,19 @@ class MockServiceChatXiaomiPlatform
   Future invokeMethod(String methodName, [arguments]) {
     throw UnimplementedError();
   }
+
+  @override
+  late List<ServiceChatXiaomiCallBack> chatXiaomiCallBacks;
+
+  @override
+  void addMessageListener(ServiceChatXiaomiCallBack callback) {
+    // TODO: implement addMessageListener
+  }
+
+  @override
+  void removeMessageListener(ServiceChatXiaomiCallBack callback) {
+    // TODO: implement removeMessageListener
+  }
 }
 
 void main() {

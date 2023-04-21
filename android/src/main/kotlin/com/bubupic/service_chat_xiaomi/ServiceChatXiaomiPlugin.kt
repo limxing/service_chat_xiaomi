@@ -69,6 +69,10 @@ class ServiceChatXiaomiPlugin : FlutterPlugin, MethodCallHandler, MIMCTokenFetch
                     )
                 )
             }
+            "isOnline"->{
+                val appAccount = call.argument<String>("appAccount")
+                result.success(user?.appAccount == appAccount && user?.isOnline == true)
+            }
             else -> {
                 result.notImplemented()
             }
@@ -85,6 +89,7 @@ class ServiceChatXiaomiPlugin : FlutterPlugin, MethodCallHandler, MIMCTokenFetch
     }
 
     override fun statusChange(p0: MIMCConstant.OnlineStatus?, p1: String?, p2: String?, p3: String?) {
+        channel.invokeMethod("statusChange", p0 == MIMCConstant.OnlineStatus.ONLINE)
     }
 
     /**
@@ -105,7 +110,8 @@ class ServiceChatXiaomiPlugin : FlutterPlugin, MethodCallHandler, MIMCTokenFetch
         channel.invokeMethod("handleMessage", p0?.map {
             mapOf(
                 "fromAccount" to it.fromAccount,
-                "msg" to it.payload.decodeToString(),
+                "toAccount" to it.toAccount,
+                "data" to it.payload.decodeToString(),
                 "msgType" to it.bizType,
                 "packetId" to it.packetId,
                 "sequence" to it.sequence,
@@ -121,8 +127,9 @@ class ServiceChatXiaomiPlugin : FlutterPlugin, MethodCallHandler, MIMCTokenFetch
 
     override fun handleServerAck(p0: MIMCServerAck?) {
     }
-
+    ///消息发送失败
     override fun handleSendMessageTimeout(p0: MIMCMessage?) {
+        channel.invokeMethod("handleSendMessageTimeout",p0?.packetId)
     }
 
     override fun handleSendGroupMessageTimeout(p0: MIMCGroupMessage?) {
@@ -136,6 +143,7 @@ class ServiceChatXiaomiPlugin : FlutterPlugin, MethodCallHandler, MIMCTokenFetch
     }
 
     override fun handleOnlineMessage(p0: MIMCMessage?) {
+
     }
 
     override fun handleOnlineMessageAck(p0: MIMCOnlineMessageAck?) {

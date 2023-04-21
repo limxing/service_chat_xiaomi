@@ -1,7 +1,7 @@
 name: service_chat_xiaomi
 description: A new Flutter project.
 version: 0.0.1
-homepage:
+homepage: https://www.baidu.com
 
 environment:
   sdk: '>=2.18.2 <3.0.0'
@@ -10,7 +10,9 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  path_provider: ^2.0.14
   plugin_platform_interface: ^2.0.2
+  sqlite3: ^1.11.0
 
 dev_dependencies:
   flutter_test:
@@ -41,7 +43,8 @@ flutter:
         pluginClass: ServiceChatXiaomiPlugin
 
   # To add assets to your plugin package, add an assets section, like this:
-  # assets:
+  assets:
+    - images/retry.png
   #   - images/a_dot_burr.jpeg
   #   - images/a_dot_ham.jpeg
   #

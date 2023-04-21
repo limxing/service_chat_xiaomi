@@ -30,5 +30,15 @@ abstract class ServiceChatXiaomiPlatform extends PlatformInterface {
 
   Future invokeMethod(String methodName,[ dynamic arguments ]);
 
-  ServiceChatXiaomiCallBack? chatXiaomiCallBack;
+  List<ServiceChatXiaomiCallBack> chatXiaomiCallBacks = [];
+
+  void addMessageListener(ServiceChatXiaomiCallBack callback){
+    if(!chatXiaomiCallBacks.contains(callback)){
+      chatXiaomiCallBacks.add(callback);
+    }
+  }
+
+  void removeMessageListener(ServiceChatXiaomiCallBack callback){
+    chatXiaomiCallBacks.remove(callback);
+  }
 }
