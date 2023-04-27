@@ -46,5 +46,6 @@ android {
 }
 
 dependencies {
-    implementation files('libs/mimc-java-sdk-2.0.8-SNAPSHOT.jar')
+    api files('libs/mimc-java-sdk-2.0.8-SNAPSHOT.jar')
+    implementation 'eu.simonbinder:sqlite3-native-library:3.41.0'
 }

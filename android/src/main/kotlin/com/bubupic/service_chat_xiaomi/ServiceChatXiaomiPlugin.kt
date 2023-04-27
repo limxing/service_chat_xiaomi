@@ -1,5 +1,7 @@
 package com.bubupic.service_chat_xiaomi
 
+import android.os.Handler
+import android.os.Looper
 import androidx.annotation.NonNull
 import com.xiaomi.mimc.MIMCGroupMessage
 import com.xiaomi.mimc.MIMCMessage
@@ -30,6 +32,8 @@ class ServiceChatXiaomiPlugin : FlutterPlugin, MethodCallHandler, MIMCTokenFetch
 
     private var getTokenUrl = ""
 
+    private var handler = Handler(Looper.getMainLooper())
+
     override fun onAttachedToEngine(@NonNull flutterPluginBinding: FlutterPlugin.FlutterPluginBinding) {
         channel = MethodChannel(flutterPluginBinding.binaryMessenger, "service_chat_xiaomi")
         channel.setMethodCallHandler(this)
@@ -37,6 +41,7 @@ class ServiceChatXiaomiPlugin : FlutterPlugin, MethodCallHandler, MIMCTokenFetch
     }
 
     override fun onMethodCall(@NonNull call: MethodCall, @NonNull result: Result) {
+        println("onMethodCall:${call.method}")
         when (call.method) {
             "getPlatformVersion" -> {
                 result.success("Android ${android.os.Build.VERSION.RELEASE}")
@@ -45,12 +50,18 @@ class ServiceChatXiaomiPlugin : FlutterPlugin, MethodCallHandler, MIMCTokenFetch
                 val appId = call.argument<String>("appId")
                 val appAccount = call.argument<String>("appAccount")
                 getTokenUrl = call.argument<String>("getTokenUrl")!!
-                if(user != null && user!!.appAccount == appAccount && user!!.isOnline){
+                if (user != null && user!!.appAccount == appAccount && user!!.isOnline) {
                     result.success(true)
                     return
                 }
                 user?.destroy()
-                user = MIMCUser.newInstance(appId!!.toLong(), appAccount, chatCachePath)
+                user = MIMCUser.newInstance(
+                    appId!!.toLong(),
+                    appAccount,
+                    "device_${appAccount}",
+                    chatCachePath,
+                    chatCachePath
+                )
                 user?.registerTokenFetcher(this)
                 user?.registerOnlineStatusListener(this)
                 user?.registerMessageHandler(this)
@@ -64,12 +75,12 @@ class ServiceChatXiaomiPlugin : FlutterPlugin, MethodCallHandler, MIMCTokenFetch
                 result.success(
                     user?.sendMessage(
                         call.argument("toAccount"),
-                        call.argument<String>("text")!!.encodeToByteArray(),
+                        call.argument<String>("data")!!.encodeToByteArray(),
                         "TEXT"
                     )
                 )
             }
-            "isOnline"->{
+            "isOnline" -> {
                 val appAccount = call.argument<String>("appAccount")
                 result.success(user?.appAccount == appAccount && user?.isOnline == true)
             }
@@ -89,7 +100,10 @@ class ServiceChatXiaomiPlugin : FlutterPlugin, MethodCallHandler, MIMCTokenFetch
     }
 
     override fun statusChange(p0: MIMCConstant.OnlineStatus?, p1: String?, p2: String?, p3: String?) {
-        channel.invokeMethod("statusChange", p0 == MIMCConstant.OnlineStatus.ONLINE)
+        println("statusChange:${p0}")
+        handler.post {
+            channel.invokeMethod("statusChange", p0 == MIMCConstant.OnlineStatus.ONLINE)
+        }
     }
 
     /**
@@ -106,18 +120,39 @@ class ServiceChatXiaomiPlugin : FlutterPlugin, MethodCallHandler, MIMCTokenFetch
      *        MIMCMessage.convIndex: 会话索引，默认0值，说明没有启用会话消息，该字段由服务器填充，在一个会话中连续自增，从1开始
      * @return 返回true说明消息被成功递交给应用层，若返回false说明消息递交失败，会再次触发该回调，直到返回true为止
      */
-    override fun handleMessage(p0: MutableList<MIMCMessage>?): Boolean {
-        channel.invokeMethod("handleMessage", p0?.map {
-            mapOf(
-                "fromAccount" to it.fromAccount,
-                "toAccount" to it.toAccount,
-                "data" to it.payload.decodeToString(),
-                "msgType" to it.bizType,
-                "packetId" to it.packetId,
-                "sequence" to it.sequence,
-                "timestamp" to it.timestamp
+    override fun handleMessage(p0: List<MIMCMessage>?): Boolean {
+        println("handleMessage:${p0?.size}")
+        val messages = arrayListOf<Map<String, Any>>()
+        p0?.forEach {
+            messages.add(
+                mapOf(
+                    "fromAccount" to it.fromAccount,
+                    "toAccount" to it.toAccount,
+                    "data" to it.payload.decodeToString(),
+                    "msgType" to it.bizType,
+                    "packetId" to it.packetId,
+                    "sequence" to it.sequence,
+                    "timestamp" to it.timestamp
+                )
             )
-        })
+        }
+
+        handler.post {
+            channel.invokeMethod("handleMessage",messages)
+        }
+
+//        channel.invokeMethod("handleMessage", p0?.map {
+//            mapOf(
+//                "fromAccount" to it.fromAccount,
+//                "toAccount" to it.toAccount,
+//                "data" to it.payload.decodeToString(),
+//                "msgType" to it.bizType,
+//                "packetId" to it.packetId,
+//                "sequence" to it.sequence,
+//                "timestamp" to it.timestamp
+//            )
+//        })
+        println("handleMessage messages:$messages")
         return true
     }
 
@@ -127,9 +162,12 @@ class ServiceChatXiaomiPlugin : FlutterPlugin, MethodCallHandler, MIMCTokenFetch
 
     override fun handleServerAck(p0: MIMCServerAck?) {
     }
+
     ///消息发送失败
     override fun handleSendMessageTimeout(p0: MIMCMessage?) {
-        channel.invokeMethod("handleSendMessageTimeout",p0?.packetId)
+        handler.post {
+            channel.invokeMethod("handleSendMessageTimeout", p0?.packetId)
+        }
     }
 
     override fun handleSendGroupMessageTimeout(p0: MIMCGroupMessage?) {
@@ -143,7 +181,7 @@ class ServiceChatXiaomiPlugin : FlutterPlugin, MethodCallHandler, MIMCTokenFetch
     }
 
     override fun handleOnlineMessage(p0: MIMCMessage?) {
-
+        println("handleOnlineMessage")
     }
 
     override fun handleOnlineMessageAck(p0: MIMCOnlineMessageAck?) {

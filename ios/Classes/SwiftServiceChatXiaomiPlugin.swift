@@ -123,10 +123,11 @@ public class SwiftServiceChatXiaomiPlugin: NSObject, FlutterPlugin, parseTokenDe
               return
           }
           _user?.destroy()
-          _user = MCUser.init(appId: Int64(appId)!, andAppAccount: appAccount)
+          _user = MCUser.init(appId: Int64(appId)!, andAppAccount: appAccount,andResource: "device_\(appAccount)")
           _user?.parseTokenDelegate = self
           _user?.onlineStatusDelegate = self
           _user?.handleMessageDelegate = self
+          _user?.enableSSO(true)
 //          _user?.handleRtsCallDelegate = self
           result(_user?.login())
           break

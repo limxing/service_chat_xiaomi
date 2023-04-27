@@ -59,10 +59,12 @@ class ChatItem extends StatelessWidget {
       ),
       if (!message.success)
         CupertinoButton(
+          padding: EdgeInsets.zero,
+            minSize: 0,
             child: Image.asset(
               'images/retry.png',
-              width: 20,
-              height: 20,
+              width: 26,
+              height: 26,
               package: 'service_chat_xiaomi',
             ),
             onPressed: () {}),
