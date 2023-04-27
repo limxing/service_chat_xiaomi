@@ -1,4 +1,7 @@
-import 'package:sqlite3/src/result_set.dart';
+import 'dart:convert';
+
+import 'package:flutter/material.dart';
+import 'package:sqlite3/src/result_set.dart' as sql;
 
 class ChatMessage {
   final String fromAccount;
@@ -51,7 +54,7 @@ class ChatMessage {
         'success': success
       };
 
-  factory ChatMessage.fromRow(Row json) =>
+  factory ChatMessage.fromRow(sql.Row json) =>
       ChatMessage(
           fromAccount: json["fromAccount"],
           timestamp: json['timestamp'],
@@ -61,4 +64,12 @@ class ChatMessage {
           data: json['data'],
           packetId: json['packetId'],
           success: json['success'] != 0);
+
+  Widget getWidget(bool isMyMessage){
+    Map<String, dynamic> map = jsonDecode(data);
+    if(msgType == 'TEXT'){
+      return  Text(map['text'],style: TextStyle(color: isMyMessage ? Colors.white : Colors.black87,fontSize: 16),);
+    }
+    return Container();
+  }
 }

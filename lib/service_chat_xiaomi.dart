@@ -43,7 +43,7 @@ class ServiceChatXiaomi implements ServiceChatXiaomiCallBack {
   ///数据库查询消息
   void selectMessage({int page = 1, pageSize = 30, required String toAccount, required ValueSetter<List<ChatMessage>> callBack}) {
     runSql(dbCallback: (db) {
-      var resultSet = db.select('SELECT * FROM single where fromAccount=? or toAccount=? ORDER BY sequence DESC', [toAccount, toAccount]);
+      var resultSet = db.select('SELECT * FROM single where fromAccount=? or toAccount=? ORDER BY sequence', [toAccount, toAccount]);
       print(resultSet);
       var messages = resultSet.map((e) => ChatMessage.fromRow(e)).toList();
       callBack(messages);
