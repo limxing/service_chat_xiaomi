@@ -1,15 +1,16 @@
-
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:service_chat_xiaomi/chat_bean.dart';
 import 'package:service_chat_xiaomi/chat_message.dart';
 
 class ChatItem extends StatelessWidget {
   final ChatMessage message;
   final int lastTime;
-  final bool isMyMessage;
+  final ChatParams chatParams;
 
-  const ChatItem({Key? key, required this.message, required this.lastTime, required this.isMyMessage}) : super(key: key);
+  const ChatItem({Key? key, required this.message, required this.lastTime, required this.chatParams}) : super(key: key);
 
   ///根据给定的日期得到format后的日期
   String _date() {
@@ -38,28 +39,37 @@ class ChatItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    var isMyMessage = message.fromAccount == chatParams.appAccount;
     var children = [
-      SizedBox(width: 6,),
+      const SizedBox(
+        width: 6,
+      ),
       ClipRRect(
         borderRadius: BorderRadius.circular(8),
-        child: Image.network(
-          'https://c-ssl.duitang.com/uploads/blog/202107/12/20210712182552_00096.png',
-          width: 40,
-          height: 40,
-        ),
+        child: CachedNetworkImage(
+            imageUrl: isMyMessage ? chatParams.appAccountHeadUrl : chatParams.toAccountHeadUrl,
+            placeholder: (context, url) => Container(
+                  width: 40,
+                  height: 40,
+                  color: Colors.grey,
+                ),
+            width: 40,
+            height: 40,
+            fit: BoxFit.cover,
+            httpHeaders: chatParams.imgHttpHeaders),
       ),
       // Expanded(child: Text('${message.timestamp}\n${message.data}')),
       ConstrainedBox(
-        constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.6,minHeight: 40),
+        constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.6, minHeight: 40),
         child: Container(
           padding: const EdgeInsets.all(9),
-          decoration: BoxDecoration(color:isMyMessage ? Colors.green : Colors.white,borderRadius: BorderRadius.circular(10)),
+          decoration: BoxDecoration(color: isMyMessage ? Colors.green : Colors.white, borderRadius: BorderRadius.circular(10)),
           child: message.getWidget(isMyMessage),
         ),
       ),
       if (!message.success)
         CupertinoButton(
-          padding: EdgeInsets.zero,
+            padding: EdgeInsets.zero,
             minSize: 0,
             child: Image.asset(
               'images/retry.png',

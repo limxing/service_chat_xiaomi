@@ -15,13 +15,10 @@ export 'chat_bean.dart';
 
 ///聊天界面，只拉取离线消息
 class ChatRoom extends StatefulWidget {
-  final String tokenGetUrl;
-  final String appAccount;
-  final String toAccount;
-  final String appId;
+  final ChatParams chatParams;
   final ValueChanged<ChatStatus> chatStatusCallback;
 
-  const ChatRoom({Key? key, required this.tokenGetUrl, required this.appAccount, required this.toAccount, required this.appId, required this.chatStatusCallback}) : super(key: key);
+  const ChatRoom({Key? key, required this.chatStatusCallback, required this.chatParams}) : super(key: key);
 
   @override
   State<ChatRoom> createState() => _ChatRoomState();
@@ -41,7 +38,7 @@ class _ChatRoomState extends State<ChatRoom> with WidgetsBindingObserver impleme
   void initState() {
     super.initState();
     ServiceChatXiaomi.instance.selectMessage(
-        toAccount: widget.toAccount,
+        toAccount: widget.chatParams.toAccount,
         callBack: (messages) {
           ///初始化数据
           setState(() {
@@ -53,10 +50,10 @@ class _ChatRoomState extends State<ChatRoom> with WidgetsBindingObserver impleme
         });
     ServiceChatXiaomi.instance.addMessageListener(this);
     ServiceChatXiaomi.instance
-        .login(appId: widget.appId, appAccount: widget.appAccount, getTokenUrl: widget.tokenGetUrl)
+        .login(appId: widget.chatParams.appId, appAccount: widget.chatParams.appAccount, getTokenUrl: widget.chatParams.tokenGetUrl)
         .then((result) => print("登录：$result"));
     WidgetsBinding.instance.addObserver(this);
-     // viewBottom = MediaQuery.of(context).padding.bottom;
+    // viewBottom = MediaQuery.of(context).padding.bottom;
     // print(' viewBottom $viewBottom');
   }
 
@@ -65,11 +62,11 @@ class _ChatRoomState extends State<ChatRoom> with WidgetsBindingObserver impleme
   @override
   void didChangeMetrics() {
     super.didChangeMetrics();
-    if(Platform.isIOS) {
+    if (Platform.isIOS) {
       _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
     }
     var bottom = MediaQueryData.fromWindow(window).viewInsets.bottom;
-    if(Platform.isAndroid) {
+    if (Platform.isAndroid) {
       WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
         _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
       });
@@ -115,8 +112,7 @@ class _ChatRoomState extends State<ChatRoom> with WidgetsBindingObserver impleme
                 }
                 return ChatItem(
                   message: message,
-                  lastTime: lastTime,
-                  isMyMessage: message.fromAccount == widget.appAccount,
+                  lastTime: lastTime, chatParams: widget.chatParams,
                 );
               },
               itemCount: _messages.length,
@@ -175,12 +171,12 @@ class _ChatRoomState extends State<ChatRoom> with WidgetsBindingObserver impleme
     //默认发送成功
     var message = ChatMessage(
         timestamp: now,
-        toAccount: widget.toAccount,
+        toAccount: widget.chatParams.toAccount,
         msgType: 'TEXT',
         sequence: now * 100000 + 1,
         data: data,
         packetId: '',
-        fromAccount: widget.appAccount,
+        fromAccount: widget.chatParams.appAccount,
         success: true);
     setState(() {
       textController.clear();
@@ -194,7 +190,7 @@ class _ChatRoomState extends State<ChatRoom> with WidgetsBindingObserver impleme
     ServiceChatXiaomi.instance.insertMessage(message);
 
     ///发送
-    var result = await ServiceChatXiaomi.instance.sendTextMessage(widget.toAccount, data);
+    var result = await ServiceChatXiaomi.instance.sendTextMessage(widget.chatParams.toAccount, data);
     //发送失败
     if (result == null) {
       setState(() {

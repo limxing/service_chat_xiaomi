@@ -14,3 +14,23 @@ enum ChatStatusType {
 
   const ChatStatusType(this.tips);
 }
+
+class ChatParams {
+  final String tokenGetUrl;
+  final String appAccount;
+  final String toAccount;
+  final String appId;
+  final String appAccountHeadUrl;
+  final String toAccountHeadUrl;
+  final Map<String, String>? imgHttpHeaders;
+
+  ChatParams({
+    required this.appAccountHeadUrl,
+    required this.toAccountHeadUrl,
+    required this.tokenGetUrl,
+    required this.appAccount,
+    required this.toAccount,
+    required this.appId,
+    this.imgHttpHeaders,
+  });
+}

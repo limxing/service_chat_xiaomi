@@ -8,6 +8,7 @@ environment:
   flutter: ">=2.5.0"
 
 dependencies:
+  cached_network_image: ^3.2.3
   flutter:
     sdk: flutter
   intl: ^0.18.1
