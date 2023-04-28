@@ -4,6 +4,7 @@ import 'package:path/path.dart' as path;
 import 'package:service_chat_xiaomi/service_chat_xiaomi.dart';
 import 'package:sqlite3/sqlite3.dart';
 
+import 'chat_bean.dart';
 import 'chat_message.dart';
 import 'service_chat_xiaomi_platform_interface.dart';
 
@@ -13,7 +14,7 @@ abstract class ServiceChatXiaomiCallBack{
   void handleMessage(List<ChatMessage> messages);
   void handleSendMessageTimeout(String packageId);
 
-  void statusChange(bool arguments);
+  void statusChange(ChatStatus arguments);
 }
 
 typedef DatabaseCallBack = void Function(Database db);
@@ -43,8 +44,7 @@ class ServiceChatXiaomi implements ServiceChatXiaomiCallBack {
   ///数据库查询消息
   void selectMessage({int page = 1, pageSize = 30, required String toAccount, required ValueSetter<List<ChatMessage>> callBack}) {
     runSql(dbCallback: (db) {
-      var resultSet = db.select('SELECT * FROM single where fromAccount=? or toAccount=? ORDER BY sequence', [toAccount, toAccount]);
-      print(resultSet);
+      var resultSet = db.select('SELECT * FROM single where fromAccount=? or toAccount=? ORDER BY sequence  limit 50', [toAccount, toAccount]);
       var messages = resultSet.map((e) => ChatMessage.fromRow(e)).toList();
       callBack(messages);
     });
@@ -141,7 +141,7 @@ class ServiceChatXiaomi implements ServiceChatXiaomiCallBack {
   }
 
   @override
-  void statusChange(bool arguments) {
+  void statusChange(ChatStatus arguments) {
 
   }
 }

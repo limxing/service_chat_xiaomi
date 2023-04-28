@@ -91,7 +91,8 @@ public class SwiftServiceChatXiaomiPlugin: NSObject, FlutterPlugin, parseTokenDe
     }
     
     public func statusChange(_ user: MCUser!, status: Int32, type: String!, reason: String!, desc: String!) {
-        channel.invokeMethod("statusChange",arguments: status == 1)
+        print("statusChange: type=\(type),reason=\(reason), desc=\(desc) status=\(status)")
+        channel.invokeMethod("statusChange",arguments: ["online":status == 1,"type":type ?? ""])
     }
     
     public func parseProxyServiceToken(_ callback: ((Data?) -> Void)!) {

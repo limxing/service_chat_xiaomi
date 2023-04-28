@@ -3,6 +3,7 @@ import 'dart:ffi';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
+import 'chat_bean.dart';
 import 'chat_message.dart';
 import 'service_chat_xiaomi_platform_interface.dart';
 
@@ -14,9 +15,9 @@ class MethodChannelServiceChatXiaomi extends ServiceChatXiaomiPlatform {
 
   MethodChannelServiceChatXiaomi() {
     methodChannel.setMethodCallHandler((call) {
-      switch(call.method){
+      switch (call.method) {
         case "handleMessage":
-          print("接收消息：${call.arguments} chatXiaomiCallBacks:${chatXiaomiCallBacks.length}" );
+          print("接收消息：${call.arguments} chatXiaomiCallBacks:${chatXiaomiCallBacks.length}");
           var messages = (call.arguments as List<dynamic>).map((e) => ChatMessage.fromJson(e)).toList();
           for (var element in chatXiaomiCallBacks) {
             element.handleMessage(messages);
@@ -26,14 +27,23 @@ class MethodChannelServiceChatXiaomi extends ServiceChatXiaomiPlatform {
           for (var element in chatXiaomiCallBacks) {
             element.handleSendMessageTimeout(call.arguments);
           }
-          print("handleSendMessageTimeout：${call.arguments}" );
+          print("handleSendMessageTimeout：${call.arguments}");
           break;
         case 'statusChange':
-
-          print("statusChange：${call.arguments}" );
+          var arguments = Map<String, dynamic>.from(call.arguments);
+          bool isOline = arguments['onLine'];
+          var status = ChatStatus(
+            onLine: isOline,
+            type: isOline
+                ? ChatStatusType.NONE
+                : arguments['type'] == 'single-resource-kick'
+                    ? ChatStatusType.LOGOUT
+                    : ChatStatusType.NET_ERROR,
+          );
           for (var element in chatXiaomiCallBacks) {
-            element.statusChange(call.arguments);
+            element.statusChange(status);
           }
+          print("statusChange：${call.arguments}");
           break;
       }
       return Future.value(null);

@@ -41,12 +41,12 @@ class ChatItem extends StatelessWidget {
     var children = [
       SizedBox(width: 6,),
       ClipRRect(
+        borderRadius: BorderRadius.circular(8),
         child: Image.network(
           'https://c-ssl.duitang.com/uploads/blog/202107/12/20210712182552_00096.png',
           width: 40,
           height: 40,
         ),
-        borderRadius: BorderRadius.circular(8),
       ),
       // Expanded(child: Text('${message.timestamp}\n${message.data}')),
       ConstrainedBox(
@@ -85,8 +85,8 @@ class ChatItem extends StatelessWidget {
         Align(
           alignment: isMyMessage ? Alignment.topRight : Alignment.topLeft,
           child: Wrap(
-            children: children,
             spacing: 8,
+            children: children,
           ),
         ),
         const SizedBox(

@@ -1,13 +1,17 @@
 import 'dart:convert';
+import 'dart:io';
 import 'dart:ui';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:service_chat_xiaomi/chat_bean.dart';
 import 'package:service_chat_xiaomi/chat_item.dart';
 import 'package:service_chat_xiaomi/chat_message.dart';
 import 'package:service_chat_xiaomi/service_chat_xiaomi.dart';
 
 import 'chat_text_field.dart';
+
+export 'chat_bean.dart';
 
 ///聊天界面，只拉取离线消息
 class ChatRoom extends StatefulWidget {
@@ -15,8 +19,9 @@ class ChatRoom extends StatefulWidget {
   final String appAccount;
   final String toAccount;
   final String appId;
+  final ValueChanged<ChatStatus> chatStatusCallback;
 
-  const ChatRoom({Key? key, required this.tokenGetUrl, required this.appAccount, required this.toAccount, required this.appId}) : super(key: key);
+  const ChatRoom({Key? key, required this.tokenGetUrl, required this.appAccount, required this.toAccount, required this.appId, required this.chatStatusCallback}) : super(key: key);
 
   @override
   State<ChatRoom> createState() => _ChatRoomState();
@@ -25,12 +30,12 @@ class ChatRoom extends StatefulWidget {
 class _ChatRoomState extends State<ChatRoom> with WidgetsBindingObserver implements ServiceChatXiaomiCallBack {
   final textController = TextEditingController();
 
-  var isOnline = true;
-
   var _messages = <ChatMessage>[];
 
   final _focusNode = FocusNode();
   final _scrollController = ScrollController();
+
+  double viewBottom = 0.0;
 
   @override
   void initState() {
@@ -51,6 +56,8 @@ class _ChatRoomState extends State<ChatRoom> with WidgetsBindingObserver impleme
         .login(appId: widget.appId, appAccount: widget.appAccount, getTokenUrl: widget.tokenGetUrl)
         .then((result) => print("登录：$result"));
     WidgetsBinding.instance.addObserver(this);
+     // viewBottom = MediaQuery.of(context).padding.bottom;
+    // print(' viewBottom $viewBottom');
   }
 
   var _lastBottom = 0.0;
@@ -58,8 +65,15 @@ class _ChatRoomState extends State<ChatRoom> with WidgetsBindingObserver impleme
   @override
   void didChangeMetrics() {
     super.didChangeMetrics();
-    _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
+    if(Platform.isIOS) {
+      _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
+    }
     var bottom = MediaQueryData.fromWindow(window).viewInsets.bottom;
+    if(Platform.isAndroid) {
+      WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+        _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
+      });
+    }
     if (bottom == 0 && _lastBottom > bottom) {
       _focusNode.unfocus();
     }
@@ -77,23 +91,12 @@ class _ChatRoomState extends State<ChatRoom> with WidgetsBindingObserver impleme
 
   int lastTime = 0;
 
-  int? maxLine = null;
+  int? maxLine;
 
   @override
   Widget build(BuildContext context) {
     return Column(
       children: [
-        if (!isOnline)
-          Container(
-            height: 30,
-            color: Colors.red,
-            child: Center(
-              child: Text(
-                "没有连接服务器，请检查网络",
-                style: TextStyle(color: Colors.white, fontSize: 13),
-              ),
-            ),
-          ),
         Expanded(
             child: Container(
           color: Colors.grey.withAlpha(40),
@@ -123,14 +126,14 @@ class _ChatRoomState extends State<ChatRoom> with WidgetsBindingObserver impleme
           ),
         )),
         Container(
-          padding: EdgeInsets.all(8),
+          padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(border: Border(top: BorderSide(color: Colors.black.withAlpha(20), width: 0.5)), color: Colors.grey.withAlpha(30)),
           child: SafeArea(
             top: false,
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                SizedBox(
+                const SizedBox(
                   width: 7,
                 ),
                 Expanded(
@@ -139,19 +142,19 @@ class _ChatRoomState extends State<ChatRoom> with WidgetsBindingObserver impleme
                   textController: textController,
                   onSubmit: _sendMessage,
                 )),
-                SizedBox(
+                const SizedBox(
                   width: 10,
                 ),
                 Container(
                   decoration: BoxDecoration(color: Colors.green.withAlpha(200), borderRadius: BorderRadius.circular(8)),
                   child: CupertinoButton(
                       minSize: 36,
-                      padding: EdgeInsets.only(left: 5, right: 5),
-                      child: Text(
+                      padding: const EdgeInsets.only(left: 5, right: 5),
+                      onPressed: _sendMessage,
+                      child: const Text(
                         '发送',
                         style: TextStyle(color: Colors.white, fontSize: 16),
-                      ),
-                      onPressed: _sendMessage),
+                      )),
                 )
               ],
             ),
@@ -204,14 +207,13 @@ class _ChatRoomState extends State<ChatRoom> with WidgetsBindingObserver impleme
       message.packetId = result;
       ServiceChatXiaomi.instance.updateSendMessage(message);
     }
-    print(result);
   }
 
   @override
   void handleMessage(List<ChatMessage> messages) {
     if (_scrollController.offset == _scrollController.position.maxScrollExtent) {
       WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-        _scrollController.animateTo(_scrollController.position.maxScrollExtent, duration: Duration(milliseconds: 200), curve: Curves.easeIn);
+        _scrollController.animateTo(_scrollController.position.maxScrollExtent, duration: const Duration(milliseconds: 200), curve: Curves.easeIn);
       });
     }
     setState(() {
@@ -230,9 +232,7 @@ class _ChatRoomState extends State<ChatRoom> with WidgetsBindingObserver impleme
   }
 
   @override
-  void statusChange(bool isOnline) {
-    setState(() {
-      this.isOnline = isOnline;
-    });
+  void statusChange(ChatStatus status) {
+    widget.chatStatusCallback(status);
   }
 }

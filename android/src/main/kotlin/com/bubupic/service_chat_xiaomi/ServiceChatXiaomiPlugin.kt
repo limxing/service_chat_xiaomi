@@ -100,9 +100,12 @@ class ServiceChatXiaomiPlugin : FlutterPlugin, MethodCallHandler, MIMCTokenFetch
     }
 
     override fun statusChange(p0: MIMCConstant.OnlineStatus?, p1: String?, p2: String?, p3: String?) {
-        println("statusChange:${p0}")
+        println("statusChange:${p0}，$p1 $p2 $p3")
         handler.post {
-            channel.invokeMethod("statusChange", p0 == MIMCConstant.OnlineStatus.ONLINE)
+            channel.invokeMethod(
+                "statusChange",
+                mapOf("onLine" to (p0 == MIMCConstant.OnlineStatus.ONLINE), "type" to (p1 ?: ""))
+            )
         }
     }
 
@@ -122,36 +125,35 @@ class ServiceChatXiaomiPlugin : FlutterPlugin, MethodCallHandler, MIMCTokenFetch
      */
     override fun handleMessage(p0: List<MIMCMessage>?): Boolean {
         println("handleMessage:${p0?.size}")
-        val messages = arrayListOf<Map<String, Any>>()
-        p0?.forEach {
-            messages.add(
-                mapOf(
-                    "fromAccount" to it.fromAccount,
-                    "toAccount" to it.toAccount,
-                    "data" to it.payload.decodeToString(),
-                    "msgType" to it.bizType,
-                    "packetId" to it.packetId,
-                    "sequence" to it.sequence,
-                    "timestamp" to it.timestamp
-                )
+//        val messages = arrayListOf<Map<String, Any>>()
+//        p0?.forEach {
+//            messages.add(
+//                mapOf(
+//                    "fromAccount" to it.fromAccount,
+//                    "toAccount" to it.toAccount,
+//                    "data" to it.payload.decodeToString(),
+//                    "msgType" to it.bizType,
+//                    "packetId" to it.packetId,
+//                    "sequence" to it.sequence,
+//                    "timestamp" to it.timestamp
+//                )
+//            )
+//        }
+        val messages = p0?.map {
+            mapOf(
+                "fromAccount" to it.fromAccount,
+                "toAccount" to it.toAccount,
+                "data" to it.payload.decodeToString(),
+                "msgType" to it.bizType,
+                "packetId" to it.packetId,
+                "sequence" to it.sequence,
+                "timestamp" to it.timestamp
             )
         }
-
         handler.post {
-            channel.invokeMethod("handleMessage",messages)
+            channel.invokeMethod("handleMessage", messages)
         }
 
-//        channel.invokeMethod("handleMessage", p0?.map {
-//            mapOf(
-//                "fromAccount" to it.fromAccount,
-//                "toAccount" to it.toAccount,
-//                "data" to it.payload.decodeToString(),
-//                "msgType" to it.bizType,
-//                "packetId" to it.packetId,
-//                "sequence" to it.sequence,
-//                "timestamp" to it.timestamp
-//            )
-//        })
         println("handleMessage messages:$messages")
         return true
     }
