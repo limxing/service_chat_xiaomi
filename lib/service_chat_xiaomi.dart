@@ -50,6 +50,21 @@ class ServiceChatXiaomi implements ServiceChatXiaomiCallBack {
     });
   }
 
+  /// 查询没有阅读的消息
+  void selectUnReadMessageCount({required String appAccount, required ValueSetter<int> callBack}){
+    runSql(dbCallback: (db) {
+      var resultSet = db.select('SELECT count(*) as count FROM single where fromAccount=? and read=0', [appAccount]);
+      callBack(resultSet.single['count']);
+    });
+  }
+  /// 将消息全部变成已读
+  void updateAllMessageHasRead({required String appAccount,required String toAccount,required VoidCallback callBack}){
+    runSql(dbCallback: (db) {
+      db.select('UPDATE single set read=1 where fromAccount=? and read=0 and toAccount=?', [appAccount,toAccount]);
+      callBack();
+    });
+  }
+
   ///添加数据
   void insertMessage(ChatMessage message) {
     runSql(dbCallback: (db) {
@@ -61,7 +76,8 @@ class ServiceChatXiaomi implements ServiceChatXiaomiCallBack {
         message.sequence,
         message.timestamp,
         message.msgType,
-        message.success
+        message.success,
+        message.read
       ]);
       // rowIdCallback(db.lastInsertRowId);
     });
@@ -88,7 +104,8 @@ class ServiceChatXiaomi implements ServiceChatXiaomiCallBack {
           sequence INTEGER NOT NULL, 
           timestamp INTEGER NOT NULL,
           msgType TEXT NOT NULL,
-          success INTEGER NOT NULL DEFAULT 1
+          success INTEGER NOT NULL DEFAULT 1,
+          read INTEGER NOT NULL DEFAULT 0
         );
     ''');
       },
@@ -125,7 +142,8 @@ class ServiceChatXiaomi implements ServiceChatXiaomiCallBack {
           element.sequence,
           element.timestamp,
           element.msgType,
-          element.success
+          element.success,
+          element.read
         ]);
       }
     });
@@ -148,5 +166,5 @@ class ServiceChatXiaomi implements ServiceChatXiaomiCallBack {
 
 extension DatabaseExtension on Database {
   PreparedStatement get singleInset =>
-      prepare('INSERT INTO single (fromAccount,toAccount,data,packetId,sequence,timestamp,msgType,success) VALUES (?,?,?,?,?,?,?,?)');
+      prepare('INSERT INTO single (fromAccount,toAccount,data,packetId,sequence,timestamp,msgType,success,read) VALUES (?,?,?,?,?,?,?,?,?)');
 }

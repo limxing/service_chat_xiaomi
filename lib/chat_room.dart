@@ -177,7 +177,7 @@ class _ChatRoomState extends State<ChatRoom> with WidgetsBindingObserver impleme
         data: data,
         packetId: '',
         fromAccount: widget.chatParams.appAccount,
-        success: true);
+        success: true,read: true);
     setState(() {
       textController.clear();
       _messages.add(message);

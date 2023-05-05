@@ -12,6 +12,7 @@ class ChatMessage {
   final String data;
   String packetId;
   bool success;
+  bool read;
 
   ChatMessage({required this.timestamp,
     required this.toAccount,
@@ -20,7 +21,7 @@ class ChatMessage {
     required this.data,
     required this.packetId,
     required this.fromAccount,
-    this.success = false});
+    this.success = false,this.read = false});
 
   factory ChatMessage.fromJson(Map<dynamic, dynamic> json) =>
       ChatMessage(
@@ -31,7 +32,7 @@ class ChatMessage {
           sequence: json['sequence'],
           data: json['data'],
           packetId: json['packetId'],
-          success: json['success'] != 0);
+          success: true,read: true);
 
   factory ChatMessage.NONE() =>
       ChatMessage(timestamp: 0,
@@ -51,7 +52,8 @@ class ChatMessage {
         'sequence': sequence,
         'data': data,
         'packetId': packetId,
-        'success': success
+        'success': success,
+        'read':read
       };
 
   factory ChatMessage.fromRow(sql.Row json) =>
@@ -63,7 +65,7 @@ class ChatMessage {
           sequence: json['sequence'],
           data: json['data'],
           packetId: json['packetId'],
-          success: json['success'] != 0);
+          success: json['success'] != 0,read: json['read'] != 0);
 
   Widget getWidget(bool isMyMessage){
     Map<String, dynamic> map = jsonDecode(data);
