@@ -91,7 +91,7 @@ public class SwiftServiceChatXiaomiPlugin: NSObject, FlutterPlugin, parseTokenDe
     }
     
     public func statusChange(_ user: MCUser!, status: Int32, type: String!, reason: String!, desc: String!) {
-        print("statusChange: type=\(type),reason=\(reason), desc=\(desc) status=\(status)")
+//        print("statusChange: type=\(type),reason=\(reason), desc=\(desc) status=\(status)")
         channel.invokeMethod("statusChange",arguments: ["online":status == 1,"type":type ?? ""])
     }
     
@@ -112,7 +112,8 @@ public class SwiftServiceChatXiaomiPlugin: NSObject, FlutterPlugin, parseTokenDe
     var _user:MCUser?
 
   public func handle(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
-      
+      print("method:\(call.method)")
+    
       switch call.method {
       case "login":
           let dic = call.arguments as! NSDictionary
@@ -147,8 +148,12 @@ public class SwiftServiceChatXiaomiPlugin: NSObject, FlutterPlugin, parseTokenDe
           let dic = call.arguments as! NSDictionary
           let appAccount = dic.string(key: "appAccount")
           result(_user?.getAppAccount() == appAccount && _user?.isOnline() == true)
+          break
+      case "xiaomiToken":
+          result(_user?.getToken())
+          break
       default:
-          result("iOS " + UIDevice.current.systemVersion)
+          result(nil)
       }
     
   }

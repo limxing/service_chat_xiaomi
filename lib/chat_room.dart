@@ -62,8 +62,8 @@ class _ChatRoomState extends State<ChatRoom> with WidgetsBindingObserver impleme
   @override
   void didChangeMetrics() {
     super.didChangeMetrics();
-    if (Platform.isIOS) {
-      _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
+    if (Platform.isIOS && _scrollController.hasClients) {
+        _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
     }
     var bottom = MediaQueryData.fromWindow(window).viewInsets.bottom;
     if (Platform.isAndroid) {

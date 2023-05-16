@@ -66,6 +66,7 @@ class ServiceChatXiaomiPlugin : FlutterPlugin, MethodCallHandler, MIMCTokenFetch
                 user?.registerOnlineStatusListener(this)
                 user?.registerMessageHandler(this)
                 user?.enableSSO(true)
+                user?.token
                 result.success(user?.login())
             }
             "logout" -> {
@@ -84,6 +85,7 @@ class ServiceChatXiaomiPlugin : FlutterPlugin, MethodCallHandler, MIMCTokenFetch
                 val appAccount = call.argument<String>("appAccount")
                 result.success(user?.appAccount == appAccount && user?.isOnline == true)
             }
+            "xiaomiToken" -> result.success(user?.token)
             else -> {
                 result.notImplemented()
             }

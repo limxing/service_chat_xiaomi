@@ -17,7 +17,7 @@ abstract class ServiceChatXiaomiCallBack{
   void statusChange(ChatStatus arguments);
 }
 
-typedef DatabaseCallBack = void Function(Database db);
+typedef DatabaseCallBack<T> = T? Function(Database db);
 
 class ServiceChatXiaomi implements ServiceChatXiaomiCallBack {
   static final ServiceChatXiaomi _instance = ServiceChatXiaomi();
@@ -34,11 +34,12 @@ class ServiceChatXiaomi implements ServiceChatXiaomiCallBack {
     ServiceChatXiaomiPlatform.instance.removeMessageListener(callback);
   }
 
-  Future runSql({required DatabaseCallBack dbCallback}) async {
+  Future<T?> runSql<T>({required DatabaseCallBack<T> dbCallback}) async {
     var documentPath = await getApplicationDocumentsDirectory();
     var db = sqlite3.open(path.join(documentPath.path, "chat_$_appAccount.db"));
-    dbCallback(db);
+    var result = dbCallback(db);
     db.dispose();
+    return result;
   }
 
   ///数据库查询消息
@@ -51,16 +52,16 @@ class ServiceChatXiaomi implements ServiceChatXiaomiCallBack {
   }
 
   /// 查询没有阅读的消息
-  void selectUnReadMessageCount({required String appAccount, required ValueSetter<int> callBack}){
-    runSql(dbCallback: (db) {
+  Future<int?> selectUnReadMessageCount({required String appAccount}){
+    return runSql<int>(dbCallback: (db) {
       var resultSet = db.select('SELECT count(*) as count FROM single where fromAccount=? and read=0', [appAccount]);
-      callBack(resultSet.single['count']);
+      return resultSet.isNotEmpty ? resultSet.single['count'] : 0;
     });
   }
   /// 将消息全部变成已读
   void updateAllMessageHasRead({required String appAccount,required String toAccount,required VoidCallback callBack}){
     runSql(dbCallback: (db) {
-      db.select('UPDATE single set read=1 where fromAccount=? and read=0 and toAccount=?', [appAccount,toAccount]);
+      db.execute('UPDATE single set read=1 where fromAccount=? and read=0 and toAccount=?', [appAccount,toAccount]);
       callBack();
     });
   }
@@ -119,6 +120,8 @@ class ServiceChatXiaomi implements ServiceChatXiaomiCallBack {
   Future logout() {
     return ServiceChatXiaomiPlatform.instance.invokeMethod('logout');
   }
+  
+  Future get token => ServiceChatXiaomiPlatform.instance.invokeMethod('xiaomiToken');
 
   ///发消息
   Future sendTextMessage(String toAccount, String text) {
