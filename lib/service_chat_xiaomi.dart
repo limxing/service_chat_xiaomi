@@ -17,7 +17,7 @@ abstract class ServiceChatXiaomiCallBack{
   void statusChange(ChatStatus arguments);
 }
 
-typedef DatabaseCallBack<T> = T? Function(Database db);
+typedef DatabaseCallBack<T> = T Function(Database db);
 
 class ServiceChatXiaomi implements ServiceChatXiaomiCallBack {
   static final ServiceChatXiaomi _instance = ServiceChatXiaomi();
@@ -34,7 +34,7 @@ class ServiceChatXiaomi implements ServiceChatXiaomiCallBack {
     ServiceChatXiaomiPlatform.instance.removeMessageListener(callback);
   }
 
-  Future<T?> runSql<T>({required DatabaseCallBack<T> dbCallback}) async {
+  Future<T> runSql<T>({required DatabaseCallBack<T> dbCallback}) async {
     var documentPath = await getApplicationDocumentsDirectory();
     var db = sqlite3.open(path.join(documentPath.path, "chat_$_appAccount.db"));
     var result = dbCallback(db);
@@ -43,26 +43,35 @@ class ServiceChatXiaomi implements ServiceChatXiaomiCallBack {
   }
 
   ///数据库查询消息
-  void selectMessage({int page = 1, pageSize = 30, required String toAccount, required ValueSetter<List<ChatMessage>> callBack}) {
-    runSql(dbCallback: (db) {
+  Future<List<ChatMessage>?> selectMessage({int page = 1, pageSize = 30, required String toAccount}) {
+    return runSql<List<ChatMessage>>(dbCallback: (db) {
       var resultSet = db.select('SELECT * FROM single where fromAccount=? or toAccount=? ORDER BY sequence  limit 50', [toAccount, toAccount]);
       var messages = resultSet.map((e) => ChatMessage.fromRow(e)).toList();
-      callBack(messages);
+      return messages;
     });
   }
 
-  /// 查询没有阅读的消息
+  /// 查询指定聊天没有阅读的消息
   Future<int?> selectUnReadMessageCount({required String appAccount}){
     return runSql<int>(dbCallback: (db) {
-      var resultSet = db.select('SELECT count(*) as count FROM single where fromAccount=? and read=0', [appAccount]);
+      var resultSet = db.select('SELECT count(*) as count FROM single where read=0 and fromAccount=?',[appAccount]);
       return resultSet.isNotEmpty ? resultSet.single['count'] : 0;
     });
   }
+
+  /// 查询所有没有阅读的消息
+  Future<int?> selectAllUnReadMessageCount(){
+    return runSql<int>(dbCallback: (db) {
+      var resultSet = db.select('SELECT count(*) as count FROM single where read=0');
+      return resultSet.isNotEmpty ? resultSet.single['count'] : 0;
+    });
+  }
+
+
   /// 将消息全部变成已读
-  void updateAllMessageHasRead({required String appAccount,required String toAccount,required VoidCallback callBack}){
-    runSql(dbCallback: (db) {
-      db.execute('UPDATE single set read=1 where fromAccount=? and read=0 and toAccount=?', [appAccount,toAccount]);
-      callBack();
+  Future updateAllMessageHasRead({required String appAccount,required String toAccount}){
+    return runSql(dbCallback: (db) {
+      db.execute('UPDATE single set read=1 where fromAccount=? and read=0 and toAccount=?', [toAccount,appAccount]);
     });
   }
 

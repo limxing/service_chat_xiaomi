@@ -32,7 +32,7 @@ class ChatMessage {
           sequence: json['sequence'],
           data: json['data'],
           packetId: json['packetId'],
-          success: true,read: true);
+          success: true,read: false);
 
   factory ChatMessage.NONE() =>
       ChatMessage(timestamp: 0,

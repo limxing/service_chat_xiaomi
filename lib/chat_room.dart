@@ -34,25 +34,38 @@ class _ChatRoomState extends State<ChatRoom> with WidgetsBindingObserver impleme
 
   double viewBottom = 0.0;
 
+  var messageLessThanTen = false;
+
   @override
   void initState() {
     super.initState();
-    ServiceChatXiaomi.instance.selectMessage(
-        toAccount: widget.chatParams.toAccount,
-        callBack: (messages) {
-          ///初始化数据
-          setState(() {
-            _messages = messages;
-          });
-          WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-            _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
-          });
+    WidgetsBinding.instance.addPostFrameCallback((timeStamp) async {
+      var messages = await ServiceChatXiaomi.instance.selectMessage(toAccount: widget.chatParams.toAccount) ?? [];
+      messageLessThanTen = messages.length < 15;
+
+      ///初始化数据
+      setState(() {
+        _messages = messageLessThanTen ? messages : messages.reversed.toList();
+      });
+      if (messageLessThanTen) {
+        WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+          _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
         });
-    ServiceChatXiaomi.instance.addMessageListener(this);
+        WidgetsBinding.instance.addObserver(this);
+      }
+      ServiceChatXiaomi.instance.addMessageListener(this);
+    });
+
+    _focusNode.addListener(() {
+      if (_focusNode.hasFocus && !messageLessThanTen) {
+        _scrollController.animateTo(0, duration: const Duration(milliseconds: 200), curve: Curves.easeIn);
+      }
+    });
+
     ServiceChatXiaomi.instance
         .login(appId: widget.chatParams.appId, appAccount: widget.chatParams.appAccount, getTokenUrl: widget.chatParams.tokenGetUrl)
         .then((result) => print("登录：$result"));
-    WidgetsBinding.instance.addObserver(this);
+
     // viewBottom = MediaQuery.of(context).padding.bottom;
     // print(' viewBottom $viewBottom');
   }
@@ -62,8 +75,9 @@ class _ChatRoomState extends State<ChatRoom> with WidgetsBindingObserver impleme
   @override
   void didChangeMetrics() {
     super.didChangeMetrics();
+    if (!_scrollController.hasClients) return;
     if (Platform.isIOS && _scrollController.hasClients) {
-        _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
+      _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
     }
     var bottom = MediaQueryData.fromWindow(window).viewInsets.bottom;
     if (Platform.isAndroid) {
@@ -80,6 +94,7 @@ class _ChatRoomState extends State<ChatRoom> with WidgetsBindingObserver impleme
   @override
   void dispose() {
     super.dispose();
+    WidgetsBinding.instance.removeObserver(this);
     ServiceChatXiaomi.instance.removeMessageListener(this);
     _focusNode.dispose();
     _scrollController.dispose();
@@ -103,7 +118,7 @@ class _ChatRoomState extends State<ChatRoom> with WidgetsBindingObserver impleme
             },
             child: ListView.builder(
               padding: const EdgeInsets.only(top: 16),
-              // reverse: true,
+              reverse: !messageLessThanTen,
               // shrinkWrap: false,
               itemBuilder: (context, index) {
                 var message = _messages[index];
@@ -112,7 +127,8 @@ class _ChatRoomState extends State<ChatRoom> with WidgetsBindingObserver impleme
                 }
                 return ChatItem(
                   message: message,
-                  lastTime: lastTime, chatParams: widget.chatParams,
+                  lastTime: lastTime,
+                  chatParams: widget.chatParams,
                 );
               },
               itemCount: _messages.length,
@@ -177,14 +193,22 @@ class _ChatRoomState extends State<ChatRoom> with WidgetsBindingObserver impleme
         data: data,
         packetId: '',
         fromAccount: widget.chatParams.appAccount,
-        success: true,read: true);
+        success: true,
+        read: true);
     setState(() {
       textController.clear();
-      _messages.add(message);
+      if (messageLessThanTen) {
+        _messages.add(message);
+      } else {
+        _messages.insert(0, message);
+      }
+      checkMessageLength();
     });
-    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-      _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
-    });
+    if (messageLessThanTen) {
+      WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+        _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
+      });
+    }
 
     //添加到数据库
     ServiceChatXiaomi.instance.insertMessage(message);
@@ -207,17 +231,31 @@ class _ChatRoomState extends State<ChatRoom> with WidgetsBindingObserver impleme
 
   @override
   void handleMessage(List<ChatMessage> messages) {
+    if (messageLessThanTen) {
+      _messages.addAll(messages);
+    } else {
+      _messages.insertAll(0, messages);
+    }
+
+    setState(checkMessageLength);
     if (_scrollController.offset == _scrollController.position.maxScrollExtent) {
       WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-        _scrollController.animateTo(_scrollController.position.maxScrollExtent, duration: const Duration(milliseconds: 200), curve: Curves.easeIn);
+        if (messageLessThanTen) {
+          _scrollController.animateTo(_scrollController.position.maxScrollExtent, duration: const Duration(milliseconds: 200), curve: Curves.easeIn);
+        } else {
+          _scrollController.animateTo(0, duration: const Duration(milliseconds: 200), curve: Curves.easeIn);
+        }
       });
     }
-    setState(() {
-      // if (messages.length > 1) {
-      //   messages.sort((a, b) => a.sequence.compareTo(b.sequence));
-      // }
-      _messages.addAll(messages);
-    });
+  }
+
+  ///检查数量，大于10 翻转
+  void checkMessageLength(){
+    if (messageLessThanTen && _messages.length >= 15) {
+      WidgetsBinding.instance.removeObserver(this);
+      _messages = _messages.reversed.toList();
+    }
+    messageLessThanTen = _messages.length < 15;
   }
 
   @override
