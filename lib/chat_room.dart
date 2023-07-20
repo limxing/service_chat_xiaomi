@@ -269,4 +269,5 @@ class _ChatRoomState extends State<ChatRoom> with WidgetsBindingObserver impleme
   void statusChange(ChatStatus status) {
     widget.chatStatusCallback(status);
   }
+  
 }

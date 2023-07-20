@@ -56,11 +56,12 @@ class ChatItem extends StatelessWidget {
             width: 40,
             height: 40,
             fit: BoxFit.cover,
+            fadeInDuration: const Duration(milliseconds: 200),
             httpHeaders: chatParams.imgHttpHeaders),
       ),
       // Expanded(child: Text('${message.timestamp}\n${message.data}')),
       ConstrainedBox(
-        constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.6, minHeight: 40),
+        constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.7, minHeight: 40),
         child: Container(
           padding: const EdgeInsets.all(9),
           decoration: BoxDecoration(color: isMyMessage ? Colors.green : Colors.white, borderRadius: BorderRadius.circular(10)),

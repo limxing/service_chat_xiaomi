@@ -30,7 +30,7 @@ class ChatMessage {
           toAccount: json['toAccount'],
           msgType: json['msgType'],
           sequence: json['sequence'],
-          data: json['data'],
+          data: "${json['data']}",
           packetId: json['packetId'],
           success: true,read: false);
 
@@ -63,7 +63,7 @@ class ChatMessage {
           toAccount: json['toAccount'],
           msgType: json['msgType'],
           sequence: json['sequence'],
-          data: json['data'],
+          data: "${json['data']}",
           packetId: json['packetId'],
           success: json['success'] != 0,read: json['read'] != 0);
 

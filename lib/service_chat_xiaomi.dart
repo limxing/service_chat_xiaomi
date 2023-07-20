@@ -10,7 +10,7 @@ import 'service_chat_xiaomi_platform_interface.dart';
 
 // typedef ServiceChatXiaomiCallBack = void Function(List<ChatMessage>);
 
-abstract class ServiceChatXiaomiCallBack{
+abstract class ServiceChatXiaomiCallBack {
   void handleMessage(List<ChatMessage> messages);
   void handleSendMessageTimeout(String packageId);
 
@@ -51,16 +51,24 @@ class ServiceChatXiaomi implements ServiceChatXiaomiCallBack {
     });
   }
 
+  ///查询最近的一条消息
+  Future<ChatMessage?> selectLastMessage({required String toAccount}) {
+    return runSql<ChatMessage?>(dbCallback: (db) {
+      var resultSet = db.select('select * from single where  fromAccount=? or toAccount=? ORDER BY sequence desc limit 1', [toAccount, toAccount]);
+      return resultSet == null || resultSet.isEmpty ? null : ChatMessage.fromRow(resultSet.first);
+    });
+  }
+
   /// 查询指定聊天没有阅读的消息
-  Future<int?> selectUnReadMessageCount({required String appAccount}){
+  Future<int?> selectUnReadMessageCount({required String appAccount}) {
     return runSql<int>(dbCallback: (db) {
-      var resultSet = db.select('SELECT count(*) as count FROM single where read=0 and fromAccount=?',[appAccount]);
+      var resultSet = db.select('SELECT count(*) as count FROM single where read=0 and fromAccount=?', [appAccount]);
       return resultSet.isNotEmpty ? resultSet.single['count'] : 0;
     });
   }
 
   /// 查询所有没有阅读的消息
-  Future<int?> selectAllUnReadMessageCount(){
+  Future<int?> selectAllUnReadMessageCount() {
     return runSql<int>(dbCallback: (db) {
       var resultSet = db.select('SELECT count(*) as count FROM single where read=0');
       return resultSet.isNotEmpty ? resultSet.single['count'] : 0;
@@ -69,9 +77,9 @@ class ServiceChatXiaomi implements ServiceChatXiaomiCallBack {
 
 
   /// 将消息全部变成已读
-  Future updateAllMessageHasRead({required String appAccount,required String toAccount}){
+  Future updateAllMessageHasRead({required String appAccount, required String toAccount}) {
     return runSql(dbCallback: (db) {
-      db.execute('UPDATE single set read=1 where fromAccount=? and read=0 and toAccount=?', [toAccount,appAccount]);
+      db.execute('UPDATE single set read=1 where fromAccount=? and read=0 and toAccount=?', [toAccount, appAccount]);
     });
   }
 
@@ -174,6 +182,8 @@ class ServiceChatXiaomi implements ServiceChatXiaomiCallBack {
   void statusChange(ChatStatus arguments) {
 
   }
+  
+  void addWelcomeMsg(ChatMessage msg) => ServiceChatXiaomiPlatform.instance.addWelcomeMsg(msg);
 }
 
 extension DatabaseExtension on Database {

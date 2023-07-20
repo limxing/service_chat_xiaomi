@@ -2,6 +2,7 @@ import 'package:plugin_platform_interface/plugin_platform_interface.dart';
 import 'package:service_chat_xiaomi/service_chat_xiaomi.dart';
 
 import 'service_chat_xiaomi_method_channel.dart';
+import 'chat_message.dart';
 
 abstract class ServiceChatXiaomiPlatform extends PlatformInterface {
   /// Constructs a ServiceChatXiaomiPlatform.
@@ -40,5 +41,11 @@ abstract class ServiceChatXiaomiPlatform extends PlatformInterface {
 
   void removeMessageListener(ServiceChatXiaomiCallBack callback){
     chatXiaomiCallBacks.remove(callback);
+  }
+  
+  void addWelcomeMsg(ChatMessage msg) {
+    for (var element in chatXiaomiCallBacks) {
+      element.handleMessage([msg]);
+    }
   }
 }
