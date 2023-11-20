@@ -23,6 +23,7 @@ class ChatParams {
   final String appAccountHeadUrl;
   final String toAccountHeadUrl;
   final Map<String, String>? imgHttpHeaders;
+  final String? sendMsg;
 
   ChatParams({
     required this.appAccountHeadUrl,
@@ -32,5 +33,6 @@ class ChatParams {
     required this.toAccount,
     required this.appId,
     this.imgHttpHeaders,
+    this.sendMsg,
   });
 }

@@ -54,6 +54,11 @@ class _ChatRoomState extends State<ChatRoom> with WidgetsBindingObserver impleme
         WidgetsBinding.instance.addObserver(this);
       }
       ServiceChatXiaomi.instance.addMessageListener(this);
+      
+      if(widget.chatParams.sendMsg?.isNotEmpty == true){
+        textController.text = widget.chatParams.sendMsg ?? '';
+        _sendMessage();
+      }
     });
 
     _focusNode.addListener(() {

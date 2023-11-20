@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:service_chat_xiaomi/chat_message.dart';
 import 'package:service_chat_xiaomi/service_chat_xiaomi.dart';
 import 'package:service_chat_xiaomi/service_chat_xiaomi_platform_interface.dart';
 import 'package:service_chat_xiaomi/service_chat_xiaomi_method_channel.dart';
@@ -30,6 +31,11 @@ class MockServiceChatXiaomiPlatform
   @override
   void removeMessageListener(ServiceChatXiaomiCallBack callback) {
     // TODO: implement removeMessageListener
+  }
+
+  @override
+  void addWelcomeMsg(ChatMessage msg) {
+    // TODO: implement addWelcomeMsg
   }
 }
 
